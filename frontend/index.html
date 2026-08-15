@@ -18,16 +18,16 @@
           <h1>Ontario Build Planning</h1>
         </div>
       </div>
-      <nav class="tabs" aria-label="Views">
-        <button class="tab is-active" data-view="portfolio">Portfolio</button>
-        <button class="tab" data-view="radar">Procurement Radar</button>
-        <button class="tab" data-view="analytics">Analytics</button>
+      <nav class="tabs" aria-label="Views" role="tablist">
+        <button class="tab is-active" id="tab-portfolio" data-view="portfolio" role="tab" aria-controls="view-portfolio" aria-selected="true">Portfolio</button>
+        <button class="tab" id="tab-radar" data-view="radar" role="tab" aria-controls="view-radar" aria-selected="false">Procurement Radar</button>
+        <button class="tab" id="tab-analytics" data-view="analytics" role="tab" aria-controls="view-analytics" aria-selected="false">Analytics</button>
       </nav>
-      <div class="data-state" id="dataState">Connecting to public data</div>
+      <div class="data-state" id="dataState" aria-live="polite">Connecting to public data</div>
     </header>
 
     <main>
-      <section class="view is-active" id="view-portfolio">
+      <section class="view is-active" id="view-portfolio" role="tabpanel" aria-labelledby="tab-portfolio">
         <aside class="left-rail panel">
           <div class="panel-heading">
             <div>
@@ -74,7 +74,7 @@
         </aside>
       </section>
 
-      <section class="view" id="view-radar">
+      <section class="view" id="view-radar" role="tabpanel" aria-labelledby="tab-radar">
         <div class="radar-layout">
           <section class="panel radar-hero">
             <div>
@@ -104,7 +104,7 @@
         </div>
       </section>
 
-      <section class="view" id="view-analytics">
+      <section class="view" id="view-analytics" role="tabpanel" aria-labelledby="tab-analytics">
         <div class="analytics-grid">
           <section class="panel chart-card wide">
             <div class="eyebrow">PORTFOLIO MIX</div><h2>Projects by category</h2>

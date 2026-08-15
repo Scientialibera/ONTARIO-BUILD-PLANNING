@@ -49,12 +49,33 @@ Summarizes category mix, delivery stage, completion-year distribution and the la
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-uvicorn api.main:app --reload --port 8000
+python -m playwright install chromium
+uvicorn api.main:app --reload --port 8123
 ```
 
-Open `http://localhost:8000`.
+Open `http://localhost:8123`. If that port is already in use, choose another available port, for example `make run PORT=8124`.
 
 The application requires internet access to retrieve live public datasets. API responses are cached locally under `data/cache/` for the configured TTL.
+
+## How to use
+
+1. **Portfolio:** use category, status, region and disclosed-budget filters to narrow the map. Click a map marker to open its project detail panel, including the published metadata and planning-complexity explanation. Reset restores the full portfolio.
+2. **Procurement Radar:** search planned work by text, or select **Candidate matches only** to focus on pipeline records with an explainable live-bid similarity match. Treat these as analyst leads, not confirmed procurement links.
+3. **Analytics:** compare category and delivery-stage mix, target-completion distribution and the largest disclosed budgets. All totals exclude projects without a published budget.
+
+## Product views
+
+### Portfolio
+
+![Portfolio filters and map](docs/screenshots/portfolio.png)
+
+### Procurement Radar
+
+![Procurement Radar search and candidate matches](docs/screenshots/procurement-radar.png)
+
+### Analytics
+
+![Portfolio analytics](docs/screenshots/analytics.png)
 
 ## Tests
 
@@ -62,6 +83,16 @@ The application requires internet access to retrieve live public datasets. API r
 pytest -q
 python scripts/check_no_emoji.py
 ```
+
+The Playwright browser suite starts an isolated local application server and intercepts changing public-data responses, so UI tests remain repeatable while live-source behavior stays covered by the service routes.
+
+```bash
+python -m playwright install chromium  # first time only
+pytest -q tests/e2e
+python scripts/capture_screenshots.py
+```
+
+`capture_screenshots.py` recreates the annotated README images with deterministic illustrative data. It is useful whenever the interface changes.
 
 ## Docker
 

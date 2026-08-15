@@ -71,11 +71,12 @@ function radarRows() {
 function renderRadar() {
   if(!state.radar) return;
   $('radarMetrics').innerHTML=[['PIPELINE',state.radar.pipeline_total],['OPEN BIDS',state.radar.open_solicitation_total],['CANDIDATE LINKS',state.radar.projects_with_candidate_matches]].map(([l,v])=>`<div class="radar-metric"><span>${l}</span><strong>${number(v)}</strong></div>`).join('');
-  $('radarBody').innerHTML=radarRows().map(item=>{ const p=item.pipeline_project, m=item.matches?.[0]; return `<tr><td><div class="project-title">${escapeHtml(p.project)}</div><div class="subtle">${escapeHtml(p.description || p.location || '')}</div></td><td>${escapeHtml(p.division || 'Not specified')}</td><td>${escapeHtml(p.procurement_window || 'Not specified')}</td><td>${m ? `<div class="project-title">${escapeHtml(m.solicitation.document_number || m.solicitation.rfx_type || 'Candidate solicitation')}</div><div class="subtle">${escapeHtml(m.solicitation.description || '')}</div>` : '<span class="subtle">No candidate live match</span>'}</td><td>${m ? `<span class="score-pill">${Math.round(m.score*100)}%</span>` : ''}</td></tr>`; }).join('');
+  const rows = radarRows();
+  $('radarBody').innerHTML=rows.length ? rows.map(item=>{ const p=item.pipeline_project, m=item.matches?.[0]; return `<tr><td><div class="project-title">${escapeHtml(p.project)}</div><div class="subtle">${escapeHtml(p.description || p.location || '')}</div></td><td>${escapeHtml(p.division || 'Not specified')}</td><td>${escapeHtml(p.procurement_window || 'Not specified')}</td><td>${m ? `<div class="project-title">${escapeHtml(m.solicitation.document_number || m.solicitation.rfx_type || 'Candidate solicitation')}</div><div class="subtle">${escapeHtml(m.solicitation.description || '')}</div>` : '<span class="subtle">No candidate live match</span>'}</td><td>${m ? `<span class="score-pill">${Math.round(m.score*100)}%</span>` : ''}</td></tr>`; }).join('') : '<tr><td class="empty-table" colspan="5">No pipeline projects match these filters.</td></tr>';
 }
 
 function bindUi() {
-  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('is-active',x===btn)); document.querySelectorAll('.view').forEach(v=>v.classList.toggle('is-active',v.id===`view-${btn.dataset.view}`)); if(btn.dataset.view==='portfolio') setTimeout(()=>window.dispatchEvent(new Event('resize')),50); }));
+  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{ document.querySelectorAll('.tab').forEach(x=>{ const active=x===btn; x.classList.toggle('is-active',active); x.setAttribute('aria-selected',String(active)); }); document.querySelectorAll('.view').forEach(v=>v.classList.toggle('is-active',v.id===`view-${btn.dataset.view}`)); if(btn.dataset.view==='portfolio') setTimeout(()=>window.dispatchEvent(new Event('resize')),50); }));
   ['categoryFilter','statusFilter','regionFilter','budgetFilter'].forEach(id=>$(id).addEventListener('change',applyFilters));
   $('resetFilters').addEventListener('click',()=>{ ['categoryFilter','statusFilter','regionFilter','budgetFilter'].forEach(id=>$(id).selectedIndex=0); applyFilters(); });
   $('radarSearch').addEventListener('input',renderRadar); $('radarMatchFilter').addEventListener('change',renderRadar);
@@ -84,12 +85,15 @@ function bindUi() {
 async function load() {
   bindUi(); initializeMap(detail);
   try {
-    const [projectsPayload, summaryPayload] = await Promise.all([fetchJson('/api/projects?limit=10000'), fetchJson('/api/projects/summary')]);
+    // Load sequentially: both endpoints use the same upstream dataset and cache.
+    // Parallel cold requests can needlessly double-hit the public CKAN service.
+    const projectsPayload = await fetchJson('/api/projects?limit=10000');
+    const summaryPayload = await fetchJson('/api/projects/summary');
     state.projects=projectsPayload.projects || []; state.summary=summaryPayload;
     optionList($('categoryFilter'), unique(state.projects.map(p=>p.category))); optionList($('statusFilter'), unique(state.projects.map(p=>p.status))); optionList($('regionFilter'), unique(state.projects.map(p=>p.region)));
     renderKpis(); renderAnalytics(); applyFilters(); $('dataState').textContent=`Live public data / ${number(state.projects.length)} records`;
   } catch (error) {
-    $('dataState').textContent='Ontario Builds unavailable'; $('kpiStrip').innerHTML=`<div class="error-box">${escapeHtml(error.message)}</div>`;
+    $('dataState').textContent='Ontario Builds unavailable'; $('kpiStrip').innerHTML=`<div class="error-box" role="alert">${escapeHtml(error.message)}</div>`;
   }
   try { state.radar=await fetchJson('/api/toronto/opportunity-radar'); renderRadar(); } catch(error) { $('radarBody').innerHTML=`<tr><td colspan="5"><div class="error-box">${escapeHtml(error.message)}</div></td></tr>`; }
 }

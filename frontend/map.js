@@ -13,6 +13,8 @@ function statusColor(status) {
 
 export function initializeMap(onSelect) {
   map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([49.2, -84.3], 5);
+  // Retain the map on its container for lightweight diagnostics and browser tests.
+  map.getContainer()._ontarioBuildMap = map;
   L.control.zoom({ position: 'bottomright' }).addTo(map);
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO', maxZoom: 19
