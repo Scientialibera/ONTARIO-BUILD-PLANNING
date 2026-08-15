@@ -1,0 +1,6 @@
+{
+  "source": "Ontario Builds",
+  "snapshot_reference_date": "2026-06-29",
+  "public_page_project_count": 5940,
+  "notes": "Reference metadata only. The application loads project records from the live Ontario open-data API and does not present this file as a project-level dataset."
+}
