@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Ontario public infrastructure and procurement intelligence">
   <title>Ontario Build Planning</title>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -10,121 +11,98 @@
 </head>
 <body>
   <div class="app-shell">
-    <header class="topbar">
+    <aside class="sidebar">
       <div class="brand-block">
-        <div class="brand-mark">OB</div>
-        <div>
-          <div class="eyebrow">PUBLIC INFRASTRUCTURE INTELLIGENCE</div>
-          <h1>Ontario Build Planning</h1>
-        </div>
+        <div class="brand-mark" aria-hidden="true">OB</div>
+        <div><h1>Ontario Build Planning</h1><div class="brand-subtitle">Infrastructure intelligence</div></div>
       </div>
-      <nav class="tabs" aria-label="Views" role="tablist">
-        <button class="tab is-active" id="tab-portfolio" data-view="portfolio" role="tab" aria-controls="view-portfolio" aria-selected="true">Portfolio</button>
-        <button class="tab" id="tab-radar" data-view="radar" role="tab" aria-controls="view-radar" aria-selected="false">Procurement Radar</button>
-        <button class="tab" id="tab-analytics" data-view="analytics" role="tab" aria-controls="view-analytics" aria-selected="false">Analytics</button>
+      <nav class="tabs" aria-label="Workspaces" role="tablist">
+        <button class="tab is-active" id="tab-portfolio" data-view="portfolio" data-label="Provincial portfolio" role="tab" aria-label="Portfolio" aria-controls="view-portfolio" aria-selected="true">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Portfolio</span>
+        </button>
+        <button class="tab" id="tab-radar" data-view="radar" data-label="Procurement radar" role="tab" aria-label="Procurement Radar" aria-controls="view-radar" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 4v3m8 5h-3m-5 8v-3M4 12h3m10.5-5.5-2.2 2.2"/></svg><span>Procurement Radar</span>
+        </button>
+        <button class="tab" id="tab-analytics" data-view="analytics" data-label="Portfolio analytics" role="tab" aria-label="Analytics" aria-controls="view-analytics" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10h4v10m4 0V4h4v16m4 0V7h-4"/></svg><span>Analytics</span>
+        </button>
+        <button class="tab" id="tab-internet" data-view="internet" data-label="Internet research" role="tab" aria-label="Internet" aria-controls="view-internet" aria-selected="false">
+          <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg><span>Internet</span><i class="nav-signal" title="Official sources"></i>
+        </button>
       </nav>
-      <div class="data-state" id="dataState" aria-live="polite">Connecting to public data</div>
-    </header>
+      <div class="sidebar-foot">
+        <div class="side-note"><span class="status-dot"></span><div><strong>Public data workspace</strong><small>Official Ontario and Toronto sources</small></div></div>
+        <a href="/docs" class="side-link" aria-label="Open API documentation">API documentation <span aria-hidden="true">Open</span></a>
+      </div>
+    </aside>
 
-    <main>
-      <section class="view is-active" id="view-portfolio" role="tabpanel" aria-labelledby="tab-portfolio">
-        <aside class="left-rail panel">
-          <div class="panel-heading">
-            <div>
-              <div class="eyebrow">PROVINCIAL PORTFOLIO</div>
-              <h2>Filter projects</h2>
-            </div>
-            <button class="text-button" id="resetFilters">Reset</button>
-          </div>
-          <label>Category<select id="categoryFilter"><option value="">All categories</option></select></label>
-          <label>Status<select id="statusFilter"><option value="">All statuses</option></select></label>
-          <label>Region<select id="regionFilter"><option value="">All regions</option></select></label>
-          <label>Minimum disclosed budget
-            <select id="budgetFilter">
-              <option value="0">Any</option>
-              <option value="10000000">$10M+</option>
-              <option value="50000000">$50M+</option>
-              <option value="100000000">$100M+</option>
-              <option value="500000000">$500M+</option>
-            </select>
-          </label>
-          <div class="rail-divider"></div>
-          <div class="compact-stat"><span>Map records</span><strong id="visibleCount">0</strong></div>
-          <div class="compact-stat"><span>Source</span><strong>Ontario Builds</strong></div>
-          <p class="microcopy">Planning complexity is a metadata screening index. It is not a delay or cost-overrun prediction.</p>
-        </aside>
+    <div class="workspace">
+      <header class="topbar">
+        <div><div class="eyebrow">CURRENT WORKSPACE</div><h2 id="workspaceTitle">Provincial portfolio</h2></div>
+        <div class="topbar-actions">
+          <div class="data-state" id="dataState" aria-live="polite"><i></i>Connecting to public data</div>
+          <button class="icon-button" type="button" title="About the data" aria-label="About the data">?</button>
+          <div class="account-chip" aria-label="Ontario planning workspace">OP</div>
+        </div>
+      </header>
 
-        <section class="map-stage">
-          <div class="kpi-strip" id="kpiStrip"></div>
-          <div id="map"></div>
-          <div class="map-legend">
-            <span><i class="dot planning"></i>Planning</span>
-            <span><i class="dot construction"></i>Under construction</span>
-            <span><i class="dot complete"></i>Complete</span>
-            <span><i class="dot other"></i>Other</span>
+      <main>
+        <section class="view is-active" id="view-portfolio" role="tabpanel" aria-labelledby="tab-portfolio">
+          <aside class="left-rail panel">
+            <div class="panel-heading"><div><div class="eyebrow">PROJECT MAP</div><h2>Filters</h2></div><button class="text-button" id="resetFilters">Clear</button></div>
+            <label>Category<select id="categoryFilter"><option value="">All categories</option></select></label>
+            <label>Status<select id="statusFilter"><option value="">All statuses</option></select></label>
+            <label>Region<select id="regionFilter"><option value="">All regions</option></select></label>
+            <label>Minimum disclosed budget
+              <select id="budgetFilter"><option value="0">Any value</option><option value="10000000">$10M+</option><option value="50000000">$50M+</option><option value="100000000">$100M+</option><option value="500000000">$500M+</option></select>
+            </label>
+            <div class="filter-summary"><div class="compact-stat"><span>Map records</span><strong id="visibleCount">0</strong></div><div class="compact-stat"><span>Source</span><strong>Ontario Builds</strong></div></div>
+            <p class="microcopy">Planning complexity is a metadata screening index, not a prediction of delay or cost overrun.</p>
+          </aside>
+          <section class="map-stage">
+            <div class="kpi-strip" id="kpiStrip"></div>
+            <div id="map"></div>
+            <div class="map-legend"><span><i class="dot planning"></i>Planning</span><span><i class="dot construction"></i>Construction</span><span><i class="dot complete"></i>Complete</span><span><i class="dot other"></i>Other</span></div>
+          </section>
+          <aside class="right-rail panel" id="projectDetail">
+            <div class="empty-detail"><div class="empty-icon">MAP</div><div class="eyebrow">PROJECT INTELLIGENCE</div><h2>Select a project</h2><p>Choose a marker to inspect budget, status, completion target, funding structure and planning complexity.</p></div>
+          </aside>
+        </section>
+
+        <section class="view" id="view-radar" role="tabpanel" aria-labelledby="tab-radar">
+          <div class="page-layout">
+            <section class="page-hero"><div><div class="eyebrow">TORONTO PROCUREMENT RADAR</div><h2>Planned capital work mapped to live solicitations</h2><p>Explainable text similarity surfaces candidate links for analyst review. These are leads, not authoritative procurement relationships.</p></div><div class="radar-metrics" id="radarMetrics"></div></section>
+            <section class="panel data-table-card">
+              <div class="table-toolbar"><div><strong>Opportunity pipeline</strong><small>Search planned work, divisions and live bids</small></div><input id="radarSearch" type="search" placeholder="Search project, division or solicitation"><label class="inline-label">Show<select id="radarMatchFilter"><option value="all">All pipeline projects</option><option value="matched">Candidate matches only</option></select></label></div>
+              <div class="table-scroll"><table><thead><tr><th>Planned project</th><th>Division</th><th>Procurement window</th><th>Candidate live match</th><th>Similarity</th></tr></thead><tbody id="radarBody"></tbody></table></div>
+            </section>
           </div>
         </section>
 
-        <aside class="right-rail panel" id="projectDetail">
-          <div class="empty-detail">
-            <div class="eyebrow">PROJECT DETAIL</div>
-            <h2>Select a project</h2>
-            <p>Choose a marker to inspect budget, status, completion target, funding structure and planning complexity.</p>
+        <section class="view" id="view-analytics" role="tabpanel" aria-labelledby="tab-analytics">
+          <div class="page-layout">
+            <section class="page-hero compact"><div><div class="eyebrow">PORTFOLIO ANALYTICS</div><h2>Delivery mix and disclosed capital value</h2><p>Explore the composition and timing of Ontario's published infrastructure portfolio.</p></div></section>
+            <div class="analytics-grid">
+              <section class="panel chart-card wide"><div class="eyebrow">PORTFOLIO MIX</div><h2>Projects by category</h2><div class="bar-list" id="categoryBars"></div></section>
+              <section class="panel chart-card"><div class="eyebrow">DELIVERY STAGE</div><h2>Status distribution</h2><div class="bar-list" id="statusBars"></div></section>
+              <section class="panel chart-card"><div class="eyebrow">TARGET COMPLETION</div><h2>Projects by year</h2><div class="timeline-bars" id="timelineBars"></div></section>
+              <section class="panel chart-card wide"><div class="eyebrow">DISCLOSED CAPITAL VALUE</div><h2>Largest published projects</h2><div class="rank-list" id="topBudgetList"></div></section>
+            </div>
           </div>
-        </aside>
-      </section>
+        </section>
 
-      <section class="view" id="view-radar" role="tabpanel" aria-labelledby="tab-radar">
-        <div class="radar-layout">
-          <section class="panel radar-hero">
-            <div>
-              <div class="eyebrow">TORONTO PROCUREMENT RADAR</div>
-              <h2>Planned capital work mapped to live solicitations</h2>
-              <p>Advance pipeline records are compared with current Toronto Bids records using explainable text similarity. Candidate links require analyst review.</p>
+        <section class="view" id="view-internet" role="tabpanel" aria-labelledby="tab-internet">
+          <div class="page-layout internet-layout">
+            <section class="page-hero internet-hero"><div><div class="eyebrow">OFFICIAL-SOURCE RESEARCH</div><h2>Internet intelligence, without the noise</h2><p>Open the authoritative catalogues behind the product, understand what each source can answer, and monitor runtime connectivity.</p></div><div class="internet-health" id="internetHealth"></div></section>
+            <section class="internet-toolbar panel"><div class="search-field"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg><input id="internetSearch" type="search" placeholder="Search official sources, coverage or topics"></div><div class="trust-label"><span class="status-dot"></span>Curated government sources only</div></section>
+            <div class="internet-grid">
+              <section><div class="section-heading"><div><div class="eyebrow">SOURCE DIRECTORY</div><h2>Official data and procurement portals</h2></div><span id="internetSourceCount">0 sources</span></div><div class="source-grid" id="internetSources"></div></section>
+              <aside class="signal-panel panel"><div class="eyebrow">RESEARCH SIGNALS</div><h2>How to use this workspace</h2><div class="signal-list" id="internetSignals"></div><div class="method-card"><strong>Source boundary</strong><p>This page links only to official government sources used or documented by the product. Opening a source starts research in a new browser tab.</p></div></aside>
             </div>
-            <div class="radar-metrics" id="radarMetrics"></div>
-          </section>
-          <section class="panel radar-table-wrap">
-            <div class="table-toolbar">
-              <input id="radarSearch" type="search" placeholder="Search project, division or solicitation">
-              <label class="inline-label">Show
-                <select id="radarMatchFilter">
-                  <option value="all">All pipeline projects</option>
-                  <option value="matched">Candidate matches only</option>
-                </select>
-              </label>
-            </div>
-            <div class="table-scroll">
-              <table>
-                <thead><tr><th>Planned project</th><th>Division</th><th>Procurement window</th><th>Candidate live match</th><th>Similarity</th></tr></thead>
-                <tbody id="radarBody"></tbody>
-              </table>
-            </div>
-          </section>
-        </div>
-      </section>
-
-      <section class="view" id="view-analytics" role="tabpanel" aria-labelledby="tab-analytics">
-        <div class="analytics-grid">
-          <section class="panel chart-card wide">
-            <div class="eyebrow">PORTFOLIO MIX</div><h2>Projects by category</h2>
-            <div class="bar-list" id="categoryBars"></div>
-          </section>
-          <section class="panel chart-card">
-            <div class="eyebrow">DELIVERY STAGE</div><h2>Status distribution</h2>
-            <div class="bar-list" id="statusBars"></div>
-          </section>
-          <section class="panel chart-card">
-            <div class="eyebrow">TARGET COMPLETION</div><h2>Projects by year</h2>
-            <div class="timeline-bars" id="timelineBars"></div>
-          </section>
-          <section class="panel chart-card wide">
-            <div class="eyebrow">DISCLOSED CAPITAL VALUE</div><h2>Largest projects in the public dataset</h2>
-            <div class="rank-list" id="topBudgetList"></div>
-          </section>
-        </div>
-      </section>
-    </main>
+          </div>
+        </section>
+      </main>
+    </div>
   </div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module" src="/app.js"></script>

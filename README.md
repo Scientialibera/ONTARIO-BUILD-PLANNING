@@ -12,6 +12,7 @@ The application combines a province-wide project map with a Toronto-specific Pro
 - Toronto Capital Projects Pipeline ingestion for advance procurement visibility
 - Toronto Bids ingestion for currently open competitive solicitations
 - Explainable candidate matching between planned capital projects and live solicitations
+- Curated Internet workspace for official source discovery, runtime source health and research guidance
 - Runtime caching so public APIs are not repeatedly queried on every browser interaction
 - No CI/CD configuration and no automatic workflows
 - Local no-emoji policy checker under `scripts/check_no_emoji.py`
@@ -43,6 +44,10 @@ Loads the City of Toronto's advance Capital Projects Pipeline and open Toronto B
 
 Summarizes category mix, delivery stage, completion-year distribution and the largest publicly disclosed project budgets.
 
+### Internet
+
+Provides a searchable directory of the official government catalogues behind the product, shows whether portfolio and procurement sources connected during the current session, and explains how to verify decision-critical information.
+
 ## Run locally
 
 ```bash
@@ -62,6 +67,7 @@ The application requires internet access to retrieve live public datasets. API r
 1. **Portfolio:** use category, status, region and disclosed-budget filters to narrow the map. Click a map marker to open its project detail panel, including the published metadata and planning-complexity explanation. Reset restores the full portfolio.
 2. **Procurement Radar:** search planned work by text, or select **Candidate matches only** to focus on pipeline records with an explainable live-bid similarity match. Treat these as analyst leads, not confirmed procurement links.
 3. **Analytics:** compare category and delivery-stage mix, target-completion distribution and the largest disclosed budgets. All totals exclude projects without a published budget.
+4. **Internet:** search the curated official-source directory by topic, confirm runtime source health, then open authoritative records in a separate browser tab for verification.
 
 ## Product views
 
@@ -76,6 +82,12 @@ The application requires internet access to retrieve live public datasets. API r
 ### Analytics
 
 ![Portfolio analytics](docs/screenshots/analytics.png)
+
+### Internet
+
+![Official-source Internet research workspace](docs/screenshots/internet.png)
+
+The orange numbered signals on each screenshot are explained in the [numbered product tour](docs/product-tour.md). The visual redesign was guided by a generated SaaS-specific [UI direction](docs/design/saas-ui-direction.png), then implemented as accessible HTML, CSS and JavaScript rather than shipping the mockup as a static image.
 
 ## Tests
 
@@ -92,7 +104,7 @@ pytest -q tests/e2e
 python scripts/capture_screenshots.py
 ```
 
-`capture_screenshots.py` recreates the annotated README images with deterministic illustrative data. It is useful whenever the interface changes.
+`capture_screenshots.py` recreates all four numbered README images with deterministic illustrative data. It is useful whenever the interface changes.
 
 ## Docker
 

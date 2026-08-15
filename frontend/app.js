@@ -1,19 +1,20 @@
 import { fetchJson, money, escapeHtml } from './api.js';
 import { initializeMap, renderProjects } from './map.js';
 
-const state = { projects: [], filtered: [], summary: null, radar: null };
+const state = { projects: [], filtered: [], summary: null, radar: null, internet: null, health: { portfolio: 'loading', radar: 'loading' } };
 const $ = (id) => document.getElementById(id);
 
 function number(value) { return Number(value || 0).toLocaleString(); }
 function unique(values) { return [...new Set(values.filter(Boolean).map(v => String(v).trim()))].sort((a,b) => a.localeCompare(b)); }
 function optionList(select, values) { for (const value of values) { const o=document.createElement('option'); o.value=value; o.textContent=value; select.appendChild(o); } }
 function statusText(text) { const v=String(text || 'Unknown'); return v.length > 80 ? `${v.slice(0,77)}...` : v; }
+function setDataState(text, mode='') { $('dataState').className=`data-state ${mode}`.trim(); $('dataState').innerHTML=`<i></i>${escapeHtml(text)}`; }
 
 function renderKpis() {
   const s = state.summary;
   if (!s) return;
   $('kpiStrip').innerHTML = [
-    ['PROJECTS', number(s.project_count)],
+    ['ACTIVE PROJECTS', number(s.project_count)],
     ['GEOCODED', number(s.geocoded_count)],
     ['DISCLOSED VALUE', money(s.disclosed_budget_total)],
     ['BUDGETS DISCLOSED', number(s.budget_disclosure_count)],
@@ -23,7 +24,7 @@ function renderKpis() {
 function detail(project) {
   const c = project.complexity || { score: 0, band: 'unknown', reasons: [] };
   $('projectDetail').innerHTML = `
-    <div class="eyebrow">PROJECT DETAIL</div>
+    <div class="eyebrow">PROJECT INTELLIGENCE</div>
     <div class="detail-status">${escapeHtml(statusText(project.status))}</div>
     <h2>${escapeHtml(project.project || 'Infrastructure project')}</h2>
     <p class="subtle">${escapeHtml(project.description || project.result || 'No project description published.')}</p>
@@ -75,15 +76,35 @@ function renderRadar() {
   $('radarBody').innerHTML=rows.length ? rows.map(item=>{ const p=item.pipeline_project, m=item.matches?.[0]; return `<tr><td><div class="project-title">${escapeHtml(p.project)}</div><div class="subtle">${escapeHtml(p.description || p.location || '')}</div></td><td>${escapeHtml(p.division || 'Not specified')}</td><td>${escapeHtml(p.procurement_window || 'Not specified')}</td><td>${m ? `<div class="project-title">${escapeHtml(m.solicitation.document_number || m.solicitation.rfx_type || 'Candidate solicitation')}</div><div class="subtle">${escapeHtml(m.solicitation.description || '')}</div>` : '<span class="subtle">No candidate live match</span>'}</td><td>${m ? `<span class="score-pill">${Math.round(m.score*100)}%</span>` : ''}</td></tr>`; }).join('') : '<tr><td class="empty-table" colspan="5">No pipeline projects match these filters.</td></tr>';
 }
 
+function internetRows() {
+  const query=$('internetSearch').value.toLowerCase().trim();
+  return (state.internet?.sources || []).filter(source => !query || [source.name,source.organization,source.kind,source.coverage,...(source.topics||[])].join(' ').toLowerCase().includes(query));
+}
+
+function renderInternet() {
+  if (!state.internet) return;
+  const portfolioReady=state.health.portfolio==='connected', radarReady=state.health.radar==='connected';
+  $('internetHealth').innerHTML=[
+    ['PORTFOLIO SOURCE', portfolioReady?'Connected':state.health.portfolio==='unavailable'?'Unavailable':'Checking', portfolioReady?'Ontario Builds data loaded':'Runtime connection status', portfolioReady?'good':'warn'],
+    ['PROCUREMENT SOURCES', radarReady?'Connected':state.health.radar==='unavailable'?'Unavailable':'Checking', radarReady?'Pipeline and bids loaded':'Runtime connection status', radarReady?'good':'warn'],
+  ].map(([label,value,note,mode])=>`<div class="health-card ${mode}"><span>${label}</span><strong>${value}</strong><small>${note}</small></div>`).join('');
+  const rows=internetRows();
+  $('internetSourceCount').textContent=`${rows.length} ${rows.length===1?'source':'sources'}`;
+  $('internetSources').innerHTML=rows.length ? rows.map(source=>`<article class="source-card"><div class="source-card-head"><span class="source-kind">${escapeHtml(source.kind)}</span><span class="subtle">${escapeHtml(source.organization)}</span></div><h3>${escapeHtml(source.name)}</h3><p>${escapeHtml(source.coverage)}</p><div><div class="source-meta"><span>${escapeHtml(source.cadence)}</span><span>${escapeHtml(source.used_by)}</span></div><a class="source-link-button" href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">Open official source</a></div></article>`).join('') : '<div class="source-empty">No official sources match that search.</div>';
+  $('internetSignals').innerHTML=(state.internet.signals||[]).map((signal,index)=>`<div class="signal-item"><span class="signal-no">${String(index+1).padStart(2,'0')}</span><div><strong>${escapeHtml(signal.title)}</strong><small>${escapeHtml(signal.detail)}</small></div></div>`).join('');
+}
+
 function bindUi() {
-  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{ document.querySelectorAll('.tab').forEach(x=>{ const active=x===btn; x.classList.toggle('is-active',active); x.setAttribute('aria-selected',String(active)); }); document.querySelectorAll('.view').forEach(v=>v.classList.toggle('is-active',v.id===`view-${btn.dataset.view}`)); if(btn.dataset.view==='portfolio') setTimeout(()=>window.dispatchEvent(new Event('resize')),50); }));
+  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{ document.querySelectorAll('.tab').forEach(x=>{ const active=x===btn; x.classList.toggle('is-active',active); x.setAttribute('aria-selected',String(active)); }); document.querySelectorAll('.view').forEach(v=>v.classList.toggle('is-active',v.id===`view-${btn.dataset.view}`)); $('workspaceTitle').textContent=btn.dataset.label; if(btn.dataset.view==='portfolio') setTimeout(()=>window.dispatchEvent(new Event('resize')),50); }));
   ['categoryFilter','statusFilter','regionFilter','budgetFilter'].forEach(id=>$(id).addEventListener('change',applyFilters));
   $('resetFilters').addEventListener('click',()=>{ ['categoryFilter','statusFilter','regionFilter','budgetFilter'].forEach(id=>$(id).selectedIndex=0); applyFilters(); });
   $('radarSearch').addEventListener('input',renderRadar); $('radarMatchFilter').addEventListener('change',renderRadar);
+  $('internetSearch').addEventListener('input',renderInternet);
 }
 
 async function load() {
   bindUi(); initializeMap(detail);
+  try { state.internet=await fetchJson('/api/internet/sources'); renderInternet(); } catch(error) { $('internetSources').innerHTML=`<div class="error-box" role="alert">${escapeHtml(error.message)}</div>`; }
   try {
     // Load sequentially: both endpoints use the same upstream dataset and cache.
     // Parallel cold requests can needlessly double-hit the public CKAN service.
@@ -91,11 +112,11 @@ async function load() {
     const summaryPayload = await fetchJson('/api/projects/summary');
     state.projects=projectsPayload.projects || []; state.summary=summaryPayload;
     optionList($('categoryFilter'), unique(state.projects.map(p=>p.category))); optionList($('statusFilter'), unique(state.projects.map(p=>p.status))); optionList($('regionFilter'), unique(state.projects.map(p=>p.region)));
-    renderKpis(); renderAnalytics(); applyFilters(); $('dataState').textContent=`Live public data / ${number(state.projects.length)} records`;
+    state.health.portfolio='connected'; renderKpis(); renderAnalytics(); applyFilters(); setDataState(`Live public data / ${number(state.projects.length)} records`,'is-ready'); renderInternet();
   } catch (error) {
-    $('dataState').textContent='Ontario Builds unavailable'; $('kpiStrip').innerHTML=`<div class="error-box" role="alert">${escapeHtml(error.message)}</div>`;
+    state.health.portfolio='unavailable'; setDataState('Ontario Builds unavailable','is-error'); $('kpiStrip').innerHTML=`<div class="error-box" role="alert">${escapeHtml(error.message)}</div>`; renderInternet();
   }
-  try { state.radar=await fetchJson('/api/toronto/opportunity-radar'); renderRadar(); } catch(error) { $('radarBody').innerHTML=`<tr><td colspan="5"><div class="error-box">${escapeHtml(error.message)}</div></td></tr>`; }
+  try { state.radar=await fetchJson('/api/toronto/opportunity-radar'); state.health.radar='connected'; renderRadar(); renderInternet(); } catch(error) { state.health.radar='unavailable'; $('radarBody').innerHTML=`<tr><td colspan="5"><div class="error-box">${escapeHtml(error.message)}</div></td></tr>`; renderInternet(); }
 }
 
 load();

@@ -5,6 +5,7 @@
 1. Provincial Portfolio uses the Ontario Builds open dataset as the primary infrastructure inventory.
 2. Procurement Radar combines the Toronto Capital Projects Pipeline with Toronto Bids Solicitations.
 3. Analytics aggregates publicly disclosed category, status, completion and budget metadata.
+4. Internet exposes a curated official-source directory and reflects runtime connectivity from the Portfolio and Procurement Radar.
 
 ## Runtime flow
 

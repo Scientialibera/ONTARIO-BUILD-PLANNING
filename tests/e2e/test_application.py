@@ -91,6 +91,17 @@ RADAR = {
     ],
 }
 
+INTERNET = {
+    "sources": [
+        {"id": "ontario-builds", "name": "Ontario Builds", "organization": "Government of Ontario", "kind": "PROVINCIAL DATA", "url": "https://data.ontario.ca/example", "coverage": "Projects, geography, status, budgets and funding", "cadence": "Quarterly", "topics": ["portfolio", "capital value"], "used_by": "Portfolio and Analytics"},
+        {"id": "toronto-bids", "name": "Toronto Bids Solicitations", "organization": "City of Toronto", "kind": "LIVE SOLICITATIONS", "url": "https://open.toronto.ca/example", "coverage": "Open bids, deadlines, buyers and descriptions", "cadence": "Live", "topics": ["open bids", "deadlines"], "used_by": "Procurement Radar"},
+    ],
+    "signals": [
+        {"title": "Start with source health", "detail": "Confirm the application connected before relying on counts."},
+        {"title": "Open the official record", "detail": "Verify decision-critical fields at the source."},
+    ],
+}
+
 
 @pytest.fixture(scope="session")
 def app_url() -> str:
@@ -139,6 +150,8 @@ def mock_public_data(page: Page, *, portfolio_error: bool = False) -> None:
             route.fulfill(content_type="application/json", body=json.dumps(SUMMARY))
         elif path == "/api/toronto/opportunity-radar":
             route.fulfill(content_type="application/json", body=json.dumps(RADAR))
+        elif path == "/api/internet/sources":
+            route.fulfill(content_type="application/json", body=json.dumps(INTERNET))
         else:
             route.continue_()
 
@@ -149,8 +162,11 @@ def mock_public_data(page: Page, *, portfolio_error: bool = False) -> None:
 def page(browser: Browser) -> Page:
     context = browser.new_context(viewport={"width": 1440, "height": 900})
     page = context.new_page()
+    page_errors: list[str] = []
+    page.on("pageerror", lambda error: page_errors.append(str(error)))
     mock_public_data(page)
     yield page
+    assert page_errors == []
     context.close()
 
 
@@ -176,7 +192,7 @@ def test_portfolio_filters_and_project_detail(page: Page, app_url: str) -> None:
     expect(page.locator("#projectDetail")).to_contain_text("Lakeshore Transit Extension")
     expect(page.locator("#projectDetail")).to_contain_text("82/100 - very high")
 
-    page.get_by_role("button", name="Reset").click()
+    page.get_by_role("button", name="Clear").click()
     expect(page.locator("#visibleCount")).to_have_text("2")
 
 
@@ -195,6 +211,21 @@ def test_radar_and_analytics_views_are_filterable(page: Page, app_url: str) -> N
     page.get_by_role("tab", name="Analytics").click()
     expect(page.locator("#categoryBars")).to_contain_text("Transit")
     expect(page.locator("#topBudgetList")).to_contain_text("Lakeshore Transit Extension")
+
+
+def test_internet_workspace_searches_curated_official_sources(page: Page, app_url: str) -> None:
+    page.goto(app_url)
+    expect(page.locator("#visibleCount")).to_have_text("2")
+    page.get_by_role("tab", name="Internet").click()
+    expect(page.locator("#workspaceTitle")).to_have_text("Internet research")
+    expect(page.locator(".source-card")).to_have_count(2)
+    expect(page.locator("#internetHealth")).to_contain_text("Connected")
+    page.locator("#internetSearch").fill("deadlines")
+    expect(page.locator(".source-card")).to_have_count(1)
+    expect(page.locator("#internetSources")).to_contain_text("Toronto Bids Solicitations")
+    expect(page.locator(".source-link-button")).to_have_attribute("target", "_blank")
+    page.locator("#internetSearch").fill("unrelated query")
+    expect(page.locator("#internetSources")).to_contain_text("No official sources match that search.")
 
 
 def test_portfolio_failure_does_not_hide_procurement_radar(browser: Browser, app_url: str) -> None:

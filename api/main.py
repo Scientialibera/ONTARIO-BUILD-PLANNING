@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from api.core import settings
-from api.routers import projects, toronto
+from api.routers import internet, projects, toronto
 
 app = FastAPI(
     title="Ontario Build Planning API",
@@ -20,6 +20,7 @@ app.add_middleware(
 )
 app.include_router(projects.router)
 app.include_router(toronto.router)
+app.include_router(internet.router)
 
 
 @app.get("/api/health")

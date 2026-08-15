@@ -17,7 +17,7 @@ from playwright.sync_api import Page, sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "docs" / "screenshots"
 sys.path.insert(0, str(ROOT))
-from tests.e2e.test_application import PROJECTS, RADAR, SUMMARY  # noqa: E402
+from tests.e2e.test_application import INTERNET, PROJECTS, RADAR, SUMMARY  # noqa: E402
 
 
 def start_server() -> tuple[subprocess.Popen[bytes], str]:
@@ -48,6 +48,7 @@ def mock_public_data(page: Page) -> None:
             "/api/projects": {"projects": PROJECTS, "returned": len(PROJECTS)},
             "/api/projects/summary": SUMMARY,
             "/api/toronto/opportunity-radar": RADAR,
+            "/api/internet/sources": INTERNET,
         }
         if path in responses:
             route.fulfill(content_type="application/json", body=json.dumps(responses[path]))
@@ -57,34 +58,33 @@ def mock_public_data(page: Page) -> None:
     page.route("**/api/**", fulfill)
 
 
-def add_callout(page: Page, selector: str, text: str) -> None:
+def add_marker(page: Page, selector: str, number: int, x: int = 10, y: int = 10) -> None:
     page.evaluate(
-        """({selector, text}) => {
+        """({selector, number, x, y}) => {
           const rect = document.querySelector(selector).getBoundingClientRect();
-          const note = document.createElement('div');
-          note.className = 'screenshot-callout';
-          note.textContent = text;
-          note.style.left = `${Math.min(rect.right + 14, window.innerWidth - 250)}px`;
-          note.style.top = `${Math.max(rect.top + 8, 88)}px`;
-          document.body.append(note);
+          const marker = document.createElement('div');
+          marker.className = 'screenshot-marker';
+          marker.textContent = String(number).padStart(2, '0');
+          marker.style.left = `${rect.left + x}px`;
+          marker.style.top = `${rect.top + y}px`;
+          document.body.append(marker);
         }""",
-        {"selector": selector, "text": text},
+        {"selector": selector, "number": number, "x": x, "y": y},
     )
 
 
-def capture(page: Page, name: str, selector: str, text: str) -> None:
+def capture(page: Page, name: str, markers: list[tuple[str, int, int, int]]) -> None:
     page.add_style_tag(
         content="""
-          .screenshot-callout { position:fixed; z-index:5000; width:235px; padding:10px 12px;
-            color:#071018; background:#77f0c8; border:2px solid #d9fff3; border-radius:6px;
-            box-shadow:0 8px 24px rgba(0,0,0,.4); font:700 12px/1.35 system-ui; }
-          .screenshot-callout::before { content:''; position:absolute; left:-14px; top:17px;
-            border-width:7px; border-style:solid; border-color:transparent #77f0c8 transparent transparent; }
+          .screenshot-marker { position:fixed; z-index:5000; width:30px; height:30px; display:grid;
+            place-items:center; color:#fff; background:#c86818; border:3px solid #fff; border-radius:7px;
+            box-shadow:0 5px 18px rgba(29,42,34,.35); font:800 10px/1 system-ui; }
         """
     )
-    add_callout(page, selector, text)
+    for selector, number, x, y in markers:
+        add_marker(page, selector, number, x, y)
     page.screenshot(path=OUTPUT / name, full_page=False)
-    page.locator(".screenshot-callout").evaluate("node => node.remove()")
+    page.locator(".screenshot-marker").evaluate_all("nodes => nodes.forEach(node => node.remove())")
 
 
 def main() -> None:
@@ -97,11 +97,13 @@ def main() -> None:
             mock_public_data(page)
             page.goto(url)
             page.locator("#visibleCount").wait_for()
-            capture(page, "portfolio.png", ".left-rail", "Use these filters to focus the provincial map.")
+            capture(page, "portfolio.png", [(".left-rail", 1, 10, 10), ("#kpiStrip", 2, 4, 4), (".map-stage", 3, 16, 150), ("#projectDetail", 4, 10, 10)])
             page.get_by_role("tab", name="Procurement Radar").click()
-            capture(page, "procurement-radar.png", ".table-toolbar", "Search the pipeline or show only candidate live-bid matches.")
+            capture(page, "procurement-radar.png", [("#radarMetrics", 1, 4, 4), (".table-toolbar", 2, 10, 10), (".table-scroll", 3, 10, 10)])
             page.get_by_role("tab", name="Analytics").click()
-            capture(page, "analytics.png", "#categoryBars", "Compare portfolio mix, delivery stage and disclosed capital value.")
+            capture(page, "analytics.png", [("#categoryBars", 1, 2, 2), ("#statusBars", 2, 2, 2), ("#timelineBars", 3, 2, 2), ("#topBudgetList", 4, 2, 2)])
+            page.get_by_role("tab", name="Internet").click()
+            capture(page, "internet.png", [("#internetHealth", 1, 2, 2), (".internet-toolbar", 2, 10, 10), ("#internetSources", 3, 2, 2), ("#internetSignals", 4, 2, 2)])
             browser.close()
     finally:
         process.terminate()

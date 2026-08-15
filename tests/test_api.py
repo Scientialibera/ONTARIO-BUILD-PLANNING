@@ -55,3 +55,13 @@ def test_radar_joins_the_two_toronto_payloads(monkeypatch):
     assert response.status_code == 200
     assert response.json()["projects_with_candidate_matches"] == 1
     assert response.json()["matches"][0]["matches"][0]["solicitation"]["document_number"] == "RFP-1"
+
+
+def test_internet_source_directory_is_official_and_actionable():
+    response = TestClient(app).get("/api/internet/sources")
+    assert response.status_code == 200
+    payload = response.json()
+    assert len(payload["sources"]) >= 4
+    assert all(source["url"].startswith("https://") for source in payload["sources"])
+    assert {source["organization"] for source in payload["sources"]} >= {"Government of Ontario", "City of Toronto"}
+    assert payload["signals"]

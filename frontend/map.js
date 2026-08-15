@@ -5,10 +5,10 @@ let layerGroup;
 
 function statusColor(status) {
   const value = String(status || '').toLowerCase();
-  if (value.includes('planning')) return '#ffbd58';
-  if (value.includes('construction')) return '#56d4ff';
-  if (value.includes('complete')) return '#77f0c8';
-  return '#8e9ea6';
+  if (value.includes('planning')) return '#cf7926';
+  if (value.includes('construction')) return '#318ba0';
+  if (value.includes('complete')) return '#5a9d69';
+  return '#7f8b85';
 }
 
 export function initializeMap(onSelect) {
@@ -16,7 +16,7 @@ export function initializeMap(onSelect) {
   // Retain the map on its container for lightweight diagnostics and browser tests.
   map.getContainer()._ontarioBuildMap = map;
   L.control.zoom({ position: 'bottomright' }).addTo(map);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO', maxZoom: 19
   }).addTo(map);
   layerGroup = L.layerGroup().addTo(map);
