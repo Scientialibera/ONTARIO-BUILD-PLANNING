@@ -80,34 +80,12 @@ uvicorn api.main:app --reload --port 8123
 
 Open `http://localhost:8123`. The application requires internet access for live public data and uses the configured cache TTL for repeated requests.
 
-## Local checks
-
-```bash
-pytest -q
-python scripts/check_no_emoji.py
-```
-
-Browser tests can be run separately:
-
-```bash
-python -m playwright install chromium
-pytest -q tests/e2e
-```
-
-The screenshot capture utility uses deterministic illustrative records so documentation images are stable when public datasets change:
-
-```bash
-python scripts/capture_screenshots.py
-```
-
 ## Container
 
 ```bash
 docker build -t ontario-build-planning .
 docker run --rm -p 8080:8080 ontario-build-planning
 ```
-
-The repository contains no GitHub Actions or deployment workflow.
 
 ## Model limits
 
